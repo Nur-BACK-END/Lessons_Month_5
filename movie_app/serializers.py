@@ -9,8 +9,8 @@ class DirectorSerializer(serializers.ModelSerializer):
         model = Director
         fields = ['id', 'name', 'movies_count']
 
-    def get_movies_count(self, objects):
-        return objects.movies.count()
+    def get_movies_count(self, director):
+        return director.movies.count()
 
 
 class MovieSerializer(serializers.ModelSerializer):
@@ -35,4 +35,31 @@ class ReviewDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = Review
         fields = '__all__'
-        
+
+
+class MovieValidateSerializer(serializers.Serializer):
+    title = serializers.CharField(max_length=100)
+    description = serializers.CharField()
+    duration = serializers.IntegerField()
+    director_id = serializers.IntegerField()
+
+    def validate_director_id(self, director_id):
+        if not Director.objects.filter(id=director_id).exists():
+            raise serializers.ValidationError("Режиссер не найден!")
+        return director_id
+
+
+class MovieReviewSerializer(serializers.ModelSerializer):
+    rating = serializers.SerializerMethodField()
+    reviews = ReviewSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Movie
+        fields = ['id', 'title', 'description', 'duration', 'director', 'rating', 'reviews']
+
+    def get_rating(self, movie):
+        reviews = movie.reviews.all()
+        if reviews:
+            total_stars = sum(review.stars for review in reviews)
+            return round(total_stars / len(reviews), 2)
+        return 0
