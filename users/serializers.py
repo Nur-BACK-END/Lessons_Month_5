@@ -16,7 +16,7 @@ class UserRegisterSerializer(UserBaseSerializer):
             User.objects.get(username=username)
         except:
             return username
-        raise ValidationError('User already exists!')
+        raise ValidationError('User already exists')
 
 class ConfirmationCodeSerializer(serializers.Serializer):
     code = serializers.CharField(max_length=6)
